@@ -1,0 +1,5 @@
+com.solacesystems.common.xa
+com.solacesystems.jms
+com.solacesystems.jms.events
+com.solacesystems.jms.impl
+com.solacesystems.jndi

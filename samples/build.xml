@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<project name="JMS Samples" default="build" basedir=".">
+	<description>
+This is an Ant build file for the Solace JMS samples.
+Copyright 2006-2020 Solace Corporation. All rights reserved. </description>
+
+	<target name="build" depends="init" description="--> Build the sample code">
+		<delete includeemptydirs="true" failonerror="false">
+			<fileset dir="${basedir}/${output}">
+				<include name="**/*.class"/>
+			</fileset>
+		</delete>
+		<mkdir dir="${basedir}/${output}"/>
+		<javac  debug="true" 
+        	    srcdir="${basedir}/src" 
+        	    destdir="${basedir}/${output}" 
+				includeantruntime="false"
+        	    includes="" excludes="">
+			<classpath>
+				<fileset dir="${basedir}/../lib/" includes="**/*.jar"/>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="clean" depends="init" description="--> Clean build output">
+		<delete includeemptydirs="true">
+			<fileset dir="${basedir}/${output}">
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="init">
+		<property name="output" value="classes"/>
+	</target>
+</project>
