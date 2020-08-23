@@ -15,6 +15,7 @@
 
 package com.solacesystems.jms.samples;
 
+import java.util.Calendar;
 import java.util.Hashtable;
 
 import javax.jms.ExceptionListener;
@@ -23,6 +24,7 @@ import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.TemporaryQueue;
+import javax.jms.Destination;
 import javax.jms.XAConnection;
 import javax.jms.XASession;
 import javax.naming.Context;
@@ -31,9 +33,20 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import com.solacesystems.common.xa.SolXid;
+import com.solacesystems.jcsmp.DeliveryMode;
+import com.solacesystems.jcsmp.Endpoint;
+import com.solacesystems.jcsmp.EndpointProperties;
+import com.solacesystems.jcsmp.JCSMPFactory;
+import com.solacesystems.jcsmp.JCSMPSession;
+import com.solacesystems.jcsmp.Queue;
+import com.solacesystems.jcsmp.SDTStream;
+import com.solacesystems.jcsmp.StreamMessage;
+import com.solacesystems.jcsmp.XMLMessageProducer;
 import com.solacesystems.jms.SolJmsUtility;
 import com.solacesystems.jms.SolXAConnectionFactory;
 import com.solacesystems.jms.SupportedProperty;
+
+import java.util.Random;
 
 public class XATransactions implements ExceptionListener {
 
@@ -88,32 +101,50 @@ public class XATransactions implements ExceptionListener {
             connection = cf.createXAConnection();
             connection.start();
             session = connection.createXASession();
-            TemporaryQueue queue = session.createTemporaryQueue(); 
+            
+            //TemporaryQueue queue = session.createTemporaryQueue(); 
+            Destination queue = session.createQueue("q");
+            
+ 
             producer = session.createProducer(queue);
             consumer = session.createConsumer(queue);
             
             xaResource = session.getXAResource();
-            Xid xid = createXid();
+            Random rand = new Random();
+            int int_random1 = rand.nextInt(1000);
+            Xid xid = createXid(1,int_random1);
             xaResource.start(xid, XAResource.TMNOFLAGS);
 
-            Message send = session.createMessage();
-            producer.send(send);
+            String myString = String.format("%1$-" + 32000 + "s", "Charles");
+            Message send = session.createTextMessage(myString);
             
+            for(int count=0; count<20; count++)
+            {
+            	producer.send(send);
+            }
+
             xaResource.end(xid, XAResource.TMSUCCESS);
+            
+            xaResource.prepare(xid);
             xaResource.commit(xid, true);
             
             Message rcvd = consumer.receive(10000);
             System.out.println(rcvd);
-            xid = createXid();
+            
+            int int_random = rand.nextInt(1000);
+            xid = createXid(1,int_random);
             
             /* Starts work on behalf of a transaction branch specified in xid. 
              * The transaction branch will also contain messages received before the method is called.
              */
             xaResource.start(xid, XAResource.TMNOFLAGS);
-
+            
             xaResource.end(xid, XAResource.TMSUCCESS);
             xaResource.prepare(xid);
-            xaResource.commit(xid, false);   
+            
+
+            
+            xaResource.commit(xid, true);   
         } catch (Exception e) {
         	e.printStackTrace();
         } finally {
@@ -131,8 +162,8 @@ public class XATransactions implements ExceptionListener {
      * Creates an Xid using a Solace provided implementation.
      * An alternate implementation of javax.transaction.xa.Xid can be used instead.
      */
-    protected Xid createXid() {
-    	return new SolXid(0, new byte[] {0x01}, new byte[] {0x01});
+    protected Xid createXid(int gid, int bid) {
+    	return new SolXid(0, new byte[] {(byte) gid}, new byte[] {(byte) bid});
     }
     
     public static void main(String[] args) {
