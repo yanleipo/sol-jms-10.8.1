@@ -125,8 +125,7 @@ public class XATransactions implements ExceptionListener {
 
             xaResource.end(xid, XAResource.TMSUCCESS);
             
-            xaResource.prepare(xid);
-            xaResource.commit(xid, true);
+            xaResource.commit(xid, false);
             
             Message rcvd = consumer.receive(10000);
             System.out.println(rcvd);
