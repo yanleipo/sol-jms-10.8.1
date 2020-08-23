@@ -123,9 +123,11 @@ public class XATransactions implements ExceptionListener {
             	producer.send(send);
             }
 
+            Thread.sleep(3600000);
             xaResource.end(xid, XAResource.TMSUCCESS);
             
-            xaResource.commit(xid, false);
+            xaResource.prepare(xid);
+            xaResource.commit(xid, true);
             
             Message rcvd = consumer.receive(10000);
             System.out.println(rcvd);
@@ -141,7 +143,6 @@ public class XATransactions implements ExceptionListener {
             xaResource.end(xid, XAResource.TMSUCCESS);
             xaResource.prepare(xid);
             
-
             
             xaResource.commit(xid, true);   
         } catch (Exception e) {
